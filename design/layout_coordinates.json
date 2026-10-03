@@ -1,0 +1,113 @@
+{
+  "_source_of_truth": "design/pptx/ABInBev_dashboard_background.pptx (editado manualmente pelo usuario; substitui o antigo design/pptx/dashboard_background.pptx gerado por build_dashboard_backgrounds.py)",
+  "_generated_by": "inspecao direta do pptx via python-pptx (script ad-hoc, nao versionado) em 2026-10-02",
+  "unit": "inches",
+  "canvas": {
+    "width": 20.0,
+    "height": 11.25,
+    "note": "16:9, escalado ~1.5x em relacao ao rascunho anterior (13.333x7.5in). Mesma proporcao, grid maior."
+  },
+  "grid": {
+    "note": "O pptx do usuario nao usa mais grid de 12 colunas explicito por coluna uniforme; cartoes tem larguras customizadas (ex. 4.562in para 4 KPIs, 9.375in para 2 blocos de Product Analysis). Margem externa observada: 0.5in esquerda/direita; faixa de cabecalho fixa 0-1.25in; rodape de nota comeca em ~10.583in.",
+    "margin": 0.5,
+    "header_band_height": 1.25,
+    "footer_note_top": 10.583
+  },
+  "pages": [
+    {
+      "page": 1,
+      "name": "Executive Overview",
+      "visuals": [
+        { "id": "header_band", "kind": "header", "position_in": {"left": 0, "top": 0, "width": 20.0, "height": 1.25}, "fill": "#000000" },
+        { "id": "header_accent_line", "kind": "divider", "position_in": {"left": 0, "top": 1.208, "width": 20.0, "height": 0.042}, "fill": "#E5B611" },
+        { "id": "logo", "kind": "image", "title": "Logo (ABInBev) topo direito", "position_in": {"left": 17.052, "top": 0.375, "width": 2.448, "height": 0.458} },
+        { "id": "filter_0", "kind": "filter", "title": "Periodo (mes-ano)", "pending_decision": false, "position_in": {"left": 0.5, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_1", "kind": "filter", "title": "Cliente", "pending_decision": false, "position_in": {"left": 5.312, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_2", "kind": "filter", "title": "Cidade", "pending_decision": false, "position_in": {"left": 10.125, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_3", "kind": "filter", "title": "Categoria de estabelecimento", "pending_decision": false, "position_in": {"left": 14.938, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "Total Revenue", "kind": "kpi", "title": "Receita Total (Jan-Nov/2024)", "subtitle": "grao: 1 valor por pedido", "pending_decision": false, "position_in": {"left": 0.5, "top": 2.333, "width": 4.562, "height": 2.083} },
+        { "id": "Average Ticket", "kind": "kpi", "title": "Ticket Medio", "pending_decision": false, "position_in": {"left": 5.312, "top": 2.333, "width": 4.562, "height": 2.083} },
+        { "id": "Orders Count", "kind": "kpi", "title": "Pedidos no Periodo", "pending_decision": false, "position_in": {"left": 10.125, "top": 2.333, "width": 4.562, "height": 2.083} },
+        { "id": "Revenue vs Target", "kind": "kpi", "title": "Receita vs Meta (agregado)", "subtitle": "meta mensal constante", "pending_decision": false, "position_in": {"left": 14.938, "top": 2.333, "width": 4.562, "height": 2.083} },
+        { "id": "monthly_revenue_trend", "kind": "chart", "title": "Tendencia de Receita (mensal)", "subtitle": "ultimo ponto (novembro) com marcador de mes parcial", "pending_decision": false, "position_in": {"left": 0.5, "top": 4.667, "width": 19.0, "height": 5.75} }
+      ],
+      "footer_note": "Receita calculada por pedido unico (order_id); periodo jan-nov/2024, novembro parcial até dia 10."
+    },
+    {
+      "page": 2,
+      "name": "Time Analysis",
+      "visuals": [
+        { "id": "filter_0", "kind": "filter", "title": "Periodo (mes-ano)", "position_in": {"left": 0.5, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_1", "kind": "filter", "title": "Cliente", "position_in": {"left": 5.312, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_2", "kind": "filter", "title": "Cidade", "position_in": {"left": 10.125, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_3", "kind": "filter", "title": "Categoria de estabelecimento", "position_in": {"left": 14.938, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "toggle_revenue_orders_monthly", "kind": "chart", "title": "Receita Mensal / Pedidos por Mes (alternavel)", "subtitle": "Requisito de interatividade #1 — seletor de tipo de grafico (linha <-> coluna)", "position_in": {"left": 0.5, "top": 2.333, "width": 12.5, "height": 4.958} },
+        { "id": "ytd_revenue", "kind": "chart", "title": "YTD Revenue", "subtitle": "rotulo dinamico: 'YTD ate [ultima data], mes corrente parcial'", "position_in": {"left": 13.25, "top": 2.333, "width": 6.25, "height": 4.958} },
+        { "id": "mom_growth", "kind": "chart", "title": "Crescimento Mes a Mes (%)", "subtitle": "janeiro sem barra/N.A.; novembro com rotulo 'parcial' sobreposto", "position_in": {"left": 0.5, "top": 7.542, "width": 19.0, "height": 2.875} }
+      ],
+      "footer_note": "Novembro/2024 sinalizado como mes parcial (dados apenas até dia 10) em toda serie temporal."
+    },
+    {
+      "page": 3,
+      "name": "Product Analysis",
+      "visuals": [
+        { "id": "filter_0", "kind": "filter", "title": "Periodo (mes-ano)", "position_in": {"left": 0.5, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_1", "kind": "filter", "title": "Cliente", "position_in": {"left": 5.312, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_2", "kind": "filter", "title": "Cidade", "position_in": {"left": 10.125, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_3", "kind": "filter", "title": "Categoria de estabelecimento", "position_in": {"left": 14.938, "top": 1.5, "width": 4.562, "height": 0.583} },
+        {
+          "id": "top5_products_PENDING",
+          "kind": "chart",
+          "title": "Top 5 Produtos por Frequência de Pedidos",
+          "subtitle": "PENDENTE Analytics Architect: frequencia em pedidos vs receita via rateio — nao assumir eixo final",
+          "pending_decision": true,
+          "_status_2026_10_02": "TITULO PREENCHIDO NO ARQUIVO DO USUARIO (texto final 'Top 5 Produtos por Frequência de Pedidos' aplicado via python-pptx, formatacao/fonte do shape preservada). Ainda falta trocar o estilo visual do card de 'pending' (fundo #EEEDEA) para estilo normal (fundo branco + acento dourado) — isso NAO foi alterado nesta edicao (tarefa cirurgica, so texto).",
+          "fill": "#EEEDEA",
+          "position_in": {"left": 0.5, "top": 2.333, "width": 9.375, "height": 4.458}
+        },
+        {
+          "id": "top5_products_disclaimer",
+          "kind": "fixed_disclaimer",
+          "title_in_pptx": "Este ranking mostra os produtos que aparecem no maior número de pedidos — não os que geram mais receita. Os dados de origem registram apenas o valor total de cada pedido, não o preço de cada item, então não é possível calcular receita por produto individual. Testamos dividir a receita igualmente entre os itens do pedido como alternativa, mas o resultado foi inconsistente (preços implícitos variando até 350x para o mesmo produto) e foi descartado. Por isso, o critério oficial do Top 5 é frequência em pedidos.",
+          "pending_decision": false,
+          "removable_by_filter": false,
+          "_status_2026_10_02": "disclaimer preenchido — texto final oficial do Analytics Architect aplicado literalmente via python-pptx (docs/analytics/visual_specification.md secao 'Disclaimer fixo — Product Analysis' / analytics_handoff.json kpis[4].footer_disclaimer), formatacao do shape preservada.",
+          "fill": "#FFF7D9",
+          "position_in": {"left": 0.5, "top": 6.958, "width": 9.375, "height": 0.583}
+        },
+        { "id": "order_lines_by_category", "kind": "chart", "title": "Linhas de Pedido por Categoria de Bebida", "subtitle": "bucket 'Categoria nao informada' sempre visivel quando > 0; nunca moeda", "position_in": {"left": 10.125, "top": 2.333, "width": 9.375, "height": 5.208} },
+        { "id": "unsold_products", "kind": "kpi", "title": "Produtos no Catalogo sem Venda no Periodo", "subtitle": "contexto de catalogo, nao alarme (138/314)", "position_in": {"left": 0.5, "top": 7.792, "width": 6.25, "height": 2.625} },
+        { "id": "warning_banner", "kind": "banner", "title": "Nao ha receita por produto nos dados de origem — metricas desta pagina medem frequencia/presenca em pedidos, nao valor monetario.", "fill": "#FFF7D9", "position_in": {"left": 7.0, "top": 7.792, "width": 12.5, "height": 2.625} }
+      ],
+      "footer_note": "Nenhum visual de frequencia em pedidos usa formatacao de moeda (R$) ou o termo 'receita' no titulo."
+    },
+    {
+      "page": 4,
+      "name": "Customer Analysis",
+      "visuals": [
+        { "id": "filter_0", "kind": "filter", "title": "Periodo (mes-ano)", "position_in": {"left": 0.5, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_1", "kind": "filter", "title": "Cliente", "position_in": {"left": 5.312, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_2", "kind": "filter", "title": "Cidade", "position_in": {"left": 10.125, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "filter_3", "kind": "filter", "title": "Categoria de estabelecimento", "position_in": {"left": 14.938, "top": 1.5, "width": 4.562, "height": 0.583} },
+        { "id": "warning_banner", "kind": "banner", "title": "Base de apenas 8 clientes — resultados nao sao estatisticamente representativos de um universo maior de clientes.", "fill": "#FFF7D9", "removable_by_filter": false, "position_in": {"left": 0.5, "top": 2.333, "width": 19.0, "height": 0.583},
+          "_note": "No pptx do usuario este banner fica ABAIXO da barra de filtros (top=2.333, filtros em top=1.5), nao acima. A spec pede 'topo da pagina, nao rodape' - condicao atendida (ainda e o primeiro bloco de conteudo, antes dos graficos); apenas nao fica antes da barra global de filtros como no rascunho anterior do Design. Nao e um bloqueador, mas registrar para o Analytics Architect/Orchestrator decidir se importa." },
+        { "id": "revenue_by_customer_toggle", "kind": "chart", "title": "Receita por Cliente (R$ <-> %)", "subtitle": "Requisito de interatividade #2 — toggle 'Valores absolutos' / '% do total'", "position_in": {"left": 0.5, "top": 3.167, "width": 11.25, "height": 4.375} },
+        { "id": "revenue_vs_target_customer", "kind": "chart", "title": "Receita Realizada vs Meta", "subtitle": "barra agrupada ou bullet chart, por cliente", "position_in": {"left": 12.0, "top": 3.167, "width": 7.5, "height": 4.375} },
+        { "id": "revenue_by_establishment_category", "kind": "chart", "title": "Receita por Tipo de Estabelecimento", "position_in": {"left": 0.5, "top": 7.792, "width": 9.375, "height": 2.625} },
+        { "id": "revenue_by_city", "kind": "chart", "title": "Receita por Cidade", "subtitle": "3 valores canonicos (De-Para); sem cidade -> 'Nao informado'", "position_in": {"left": 10.125, "top": 7.792, "width": 9.375, "height": 2.625} }
+      ],
+      "footer_note": "n=8 clientes — leitura nao generalizavel. Aviso fixo, nao removivel por filtro."
+    },
+    {
+      "page": 5,
+      "name": "Conclusion (hidden tab)",
+      "hidden": true,
+      "visuals": [
+        { "id": "findings", "kind": "text", "title": "O que os numeros mostram", "subtitle": "principais achados — linka para paginas 1-4, sem numero novo", "position_in": {"left": 0.5, "top": 1.5, "width": 19.0, "height": 2.806} },
+        { "id": "methodology", "kind": "text", "title": "Como a receita foi calculada", "subtitle": "nota metodologica do grao de pedido (DISTINCT order_id)", "position_in": {"left": 0.5, "top": 4.556, "width": 19.0, "height": 2.806} },
+        { "id": "limitations", "kind": "text", "title": "Limitacoes dos dados", "subtitle": "8 ressalvas do EDA em linguagem executiva (n=8 clientes, nov. parcial, etc.)", "position_in": {"left": 0.5, "top": 7.611, "width": 19.0, "height": 2.806} }
+      ],
+      "footer_note": "Pagina oculta na navegacao padrao; nenhum numero aqui pode ser novo em relacao as paginas anteriores."
+    }
+  ]
+}

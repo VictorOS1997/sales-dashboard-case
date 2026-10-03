@@ -1,0 +1,64 @@
+// =====================================================================
+// 03_time_intelligence.dax — bi-case-pbi
+// DAX Engineer — calendário e medidas de inteligência temporal.
+//
+// Justificativa para calendário dedicado (dim_date): order_date em
+// fact_orders/order_revenue cobre apenas 2024-01-02 a 2024-11-10
+// (achado #7). Funções de time intelligence do DAX (DATESYTD,
+// PARALLELPERIOD, etc.) exigem uma tabela de datas contínua marcada
+// como "Date Table", o que PBI_orders por si só não oferece (datas não
+// contíguas, sem garantia de 1 linha por dia).
+// =====================================================================
+
+// ---------------------------------------------------------------------
+// dim_date — tabela calculada (Power Query ou DAX CALENDAR), contínua,
+// de 2024-01-01 a 2024-11-30. NÃO estender para dezembro/2024 nem para
+// 2023: não há dado real nesses períodos e o catálogo de KPI proíbe
+// simular/extrapolar meses sem dados (kpi_catalog.md KPI 3).
+// Marcar esta tabela como "Date Table" no modelo (Mark as Date Table),
+// relacionada a order_revenue[order_date] (1:N, Date -> order_revenue).
+// ---------------------------------------------------------------------
+dim_date =
+VAR StartDate = DATE ( 2024, 1, 1 )
+VAR EndDate = DATE ( 2024, 11, 30 )
+RETURN
+    ADDCOLUMNS (
+        CALENDAR ( StartDate, EndDate ),
+        "Year", YEAR ( [Date] ),
+        "Month", MONTH ( [Date] ),
+        "MonthName", FORMAT ( [Date], "MMM/yyyy" ),
+        "YearMonth", FORMAT ( [Date], "YYYY-MM" ),
+        "IsPartialMonth",
+            // Único mês parcial no dataset: novembro/2024, dados só até dia 10.
+            // Flag estática (não dependente de "hoje"), pois o dataset é
+            // histórico fechado em 2024-11-10 (achado #7) — não deve ser
+            // recalculada dinamicamente com TODAY().
+            YEAR ( [Date] ) = 2024 && MONTH ( [Date] ) = 11
+    )
+
+// ---------------------------------------------------------------------
+// Revenue PM (Previous Month) — usada por [MoM Growth %] em
+// 02_business_kpis.dax. Retorna BLANK para janeiro/2024 (sem mês
+// anterior no dataset), o que faz DIVIDE já retornar BLANK (N/A) em vez
+// de erro ou 0% — comportamento exigido pelo kpi_catalog.md KPI 3.
+// ---------------------------------------------------------------------
+Revenue PM =
+CALCULATE (
+    [Total Revenue],
+    PARALLELPERIOD ( dim_date[Date], -1, MONTH )
+)
+
+// ---------------------------------------------------------------------
+// YTD Revenue — KPI 4 do catálogo. Acumulado de janeiro até o mês
+// filtrado/corrente, usando DATESYTD sobre dim_date (marcada como Date
+// Table). Quando o período inclui novembro/2024, o rótulo "YTD até
+// 10/Nov/2024 (mês parcial)" é responsabilidade do visual (Dashboard
+// Designer) — a medida não decide texto de exibição.
+// Não implementar comparação YTD vs YTD-ano-anterior: só há 1 ano de
+// dados (kpi_catalog.md KPI 4, limitação registrada).
+// ---------------------------------------------------------------------
+YTD Revenue =
+CALCULATE (
+    [Total Revenue],
+    DATESYTD ( dim_date[Date] )
+)

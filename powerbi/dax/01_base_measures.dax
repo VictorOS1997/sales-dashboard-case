@@ -1,0 +1,42 @@
+// =====================================================================
+// 01_base_measures.dax — bi-case-pbi
+// DAX Engineer — medidas-base de apoio (não são KPIs de negócio em si,
+// mas blocos reutilizados pelas medidas de 02_business_kpis.dax).
+//
+// PRE-REQUISITO DE MODELO (ver model/semantic_model.md para detalhe):
+//   fact_orders            = PBI_orders, order-line grain, mas DISTINCT nas 5 colunas
+//                             (remove as 9 linhas 100% duplicadas, achado #2).
+//   order_revenue (tabela) = DISTINCT order_id, order_date, user_id, revenue
+//                             extraído de fact_orders — 1 linha por pedido (356 linhas).
+//                             É esta tabela (grão de pedido) que toda medida de receita
+//                             deve usar, NUNCA fact_orders diretamente para SUM(revenue).
+//   dim_product            = PBI_items, DISTINCT item_id + category (achado #4).
+//   dim_customer           = PBI_users (8 linhas).
+//   dim_date               = calendário criado a partir de order_date (ver 03_time_intelligence.dax).
+//
+// Convenção: nomes de medida em inglês (consistente com kpi_catalog.md / handoff.json),
+// comentários em português para rastreabilidade com os achados do EDA.
+// =====================================================================
+
+// ---------------------------------------------------------------------
+// Total Revenue (grão de pedido) — bloco base reaproveitado por quase
+// todas as medidas de negócio. Implementado aqui e referenciado abaixo,
+// nunca reescrito.
+// ---------------------------------------------------------------------
+Total Revenue =
+SUMX ( order_revenue, order_revenue[revenue] )
+
+// ---------------------------------------------------------------------
+// Distinct Order Count — contagem de pedidos únicos (grão de pedido),
+// usada como denominador do Average Ticket e em diversas outras medidas.
+// ---------------------------------------------------------------------
+Distinct Order Count =
+COUNTROWS ( order_revenue )
+
+// ---------------------------------------------------------------------
+// Order Lines Count — contagem de linhas de item de pedido (grão de
+// linha), já com a tabela fact_orders deduplicada (sem as 9 duplicatas
+// exatas). Usada em "Order Lines by Category" (02_business_kpis.dax).
+// ---------------------------------------------------------------------
+Order Lines Count =
+COUNTROWS ( fact_orders )

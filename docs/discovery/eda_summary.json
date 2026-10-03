@@ -1,0 +1,75 @@
+{
+  "dataset": "bi-case-pbi activities (PBI_items, PBI_orders, PBI_targets, PBI_users)",
+  "grain": {
+    "PBI_items.xlsx": "one row per product (item_id), but item_id is not unique — 99 item_id duplicated across 198 rows with identical category each time",
+    "PBI_orders.xlsx": "one row per order LINE (order_id x product_id), not one row per order. 356 distinct order_id across 1660 rows. revenue is constant within each order_id (verified: 0 of 356 orders have more than 1 distinct revenue value across their lines) — revenue is at the order grain, duplicated onto every item line.",
+    "PBI_targets.xlsx": "one row per user_id (8 rows), single monthly revenue target value per user, no month dimension",
+    "PBI_users.xlsx": "one row per customer/establishment (8 rows)"
+  },
+  "validated_fields": [
+    "items.item_id", "items.category",
+    "orders.order_id", "orders.order_date", "orders.user_id", "orders.product_id", "orders.revenue",
+    "targets.user_id", "targets.category", "targets.city", "targets.monthly revenue target",
+    "users.user_id", "users.category", "users.city"
+  ],
+  "quality_issues": [
+    {
+      "field": "orders.revenue",
+      "issue": "revenue is repeated across every line of a given order_id (order-grain value duplicated onto item-grain rows); naive SUM(revenue) over all 1660 rows = 5,396,656.69 vs correct SUM over 1 row per order_id (356 orders) = 606,144.09 — an ~8.9x inflation",
+      "severity": "blocker",
+      "business_impact": "Any revenue measure must aggregate by order_id first, not sum raw rows. No exact revenue-per-product is computable from raw data (no unit price/allocation present)."
+    },
+    {
+      "field": "orders (all columns)",
+      "issue": "9 fully duplicated rows (all 5 columns identical)",
+      "severity": "major",
+      "business_impact": "Inflates item/order-line counts if not deduplicated before aggregation"
+    },
+    {
+      "field": "orders.revenue",
+      "issue": "40 rows (2.4%) with revenue = 0, concentrated in 3 user_id, all category=restaurant",
+      "severity": "major",
+      "business_impact": "Ambiguous whether these are valid zero-value orders (comps/discounts) or data errors — affects Average Ticket denominator definition"
+    },
+    {
+      "field": "items.item_id",
+      "issue": "99 item_id duplicated across 198 rows (94 fully-duplicate rows); category never conflicts across duplicates",
+      "severity": "major",
+      "business_impact": "Product dimension needs DISTINCT before use; safe to dedupe since no category conflicts"
+    },
+    {
+      "field": "items.category",
+      "issue": "5 of 413 rows (1.21%) have null category; at least item_id 19045 has recorded sales in orders",
+      "severity": "minor_to_major",
+      "business_impact": "Will create a blank bucket in product-category breakdowns unless handled"
+    },
+    {
+      "field": "users.city / targets.city",
+      "issue": "5 raw text values represent only 3 real cities (São Paulo/SP, Rio de Janeiro/RJ, Campinas); 1 null in users; 3 of 8 rows diverge in spelling between users and targets tables for the same user_id",
+      "severity": "major",
+      "business_impact": "Needs standardization (De-Para) before use as a geographic filter/dimension"
+    },
+    {
+      "field": "orders.order_date",
+      "issue": "Coverage is 2024-01-02 to 2024-11-10 only — single year, November is a partial month (only 10 days)",
+      "severity": "major",
+      "business_impact": "YoY not computable (single year). MoM / YTD measures must flag November as partial to avoid showing a false decline"
+    },
+    {
+      "field": "users/targets (overall)",
+      "issue": "Only 8 distinct customers in the entire dataset",
+      "severity": "structural",
+      "business_impact": "Any customer-level analysis has very low statistical base; must be presented with that caveat, not as a representative sample"
+    }
+  ],
+  "validated_metrics": [],
+  "limitations": [
+    "No python3/pandas/openpyxl/matplotlib preinstalled in the execution environment; installed via `py -m pip install` this session (pandas 3.0.6, openpyxl 3.1.5, matplotlib 3.11.2). If a future agent's environment lacks PyPI access, this route may not be reproducible and manual xlsx(zip/xml) parsing would be needed instead (not tested, as it was not required here).",
+    "Full read of all rows/sheets in all 4 files — no sampling was applied, so coverage caveats above reflect the complete dataset, not a sample.",
+    "No unit price or per-item revenue allocation exists in the raw data — 'Top 5 products by revenue' cannot be computed exactly; only computable as 'Top 5 products by order-line appearance count' unless the Analytics Architect defines an explicit allocation rule (e.g., equal split of order revenue across its lines) subject to human validation.",
+    "Currency/unit of orders.revenue and targets.'monthly revenue target' is not stated anywhere in the source PDF or the data; assumed to be the same unit given matching user_id and plausible magnitudes, but not confirmed.",
+    "docs/Power_BI_–_Activities_Data.pdf describes only the case requirements (star schema, DAX measures, dashboard pages), not the data schema or company identity — 'ABI' appears only as a greeting signature, not confirmed as Anheuser-Busch InBev.",
+    "Do not infer causality or real growth trends without validating period completeness (November 2024 partial) and city/category comparability."
+  ],
+  "recommended_next_step": "Analytics Architect must decide, with explicit human validation: (1) how to define product-level revenue measures given the order-grain revenue limitation (Achado #1), (2) whether revenue=0 orders count toward Average Ticket, (3) how November 2024 partial-month is flagged in MoM/YTD visuals, before any DAX measure is implemented. See docs/discovery/data_quality_report.md for full evidence and docs/discovery/data_dictionary.md for field-level detail."
+}

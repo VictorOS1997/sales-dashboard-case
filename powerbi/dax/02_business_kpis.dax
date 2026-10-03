@@ -1,0 +1,147 @@
+// =====================================================================
+// 02_business_kpis.dax — bi-case-pbi
+// DAX Engineer — KPIs de negócio aprovados em docs/analytics/kpi_catalog.md
+// e docs/analytics/analytics_handoff.json. Todos os KPIs do catálogo,
+// incluindo Top 5 Products, já têm decisão fechada e estão implementados
+// (ver validation/dax_validation.md).
+//
+// Depende de 01_base_measures.dax (Total Revenue, Distinct Order Count,
+// Order Lines Count) e do modelo descrito em model/semantic_model.md.
+// =====================================================================
+
+// ---------------------------------------------------------------------
+// KPI 1 — Total Revenue
+// Já implementada em 01_base_measures.dax como [Total Revenue].
+// Reproduz R$ 606.144,09 sem filtros (ver validation/dax_validation.md).
+// Regra de grão: SUMX sobre order_revenue (1 linha por order_id),
+// nunca SUM direto sobre fact_orders (grão de linha, achado #1).
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// KPI 2 — Average Ticket
+// Decisão registrada (kpi_catalog.md #2): os 40 pedidos com revenue = 0
+// permanecem no numerador E no denominador por padrão (nenhuma evidência
+// de erro de carga). Não implementar variante "excl. revenue=0" sem
+// pedido explícito de revisão.
+// ---------------------------------------------------------------------
+Average Ticket =
+DIVIDE ( [Total Revenue], [Distinct Order Count] )
+
+// ---------------------------------------------------------------------
+// KPI 3 — Month-over-Month Growth (%)
+// Requer dim_date marcada como date table e relacionada a order_revenue
+// por order_date (ver 03_time_intelligence.dax para [Revenue PM]).
+// Janeiro não tem mês anterior dentro do dataset -> deve retornar BLANK
+// (N/A), nunca 0%. DIVIDE já retorna BLANK quando o denominador é BLANK
+// ou 0, o que cobre esse caso automaticamente.
+// Novembro/2024 é mês parcial (dados só até dia 10) — o VALOR da medida
+// é calculado normalmente (não suprimido), mas o rótulo visual de "mês
+// parcial" é responsabilidade do Dashboard Designer (visual_specification.md),
+// não da medida.
+// ---------------------------------------------------------------------
+MoM Growth % =
+VAR CurrentRevenue = [Total Revenue]
+VAR PreviousRevenue = [Revenue PM] // definida em 03_time_intelligence.dax
+RETURN
+    DIVIDE ( CurrentRevenue - PreviousRevenue, PreviousRevenue )
+
+// ---------------------------------------------------------------------
+// KPI 4 — Year-to-Date Revenue
+// Implementada em 03_time_intelligence.dax como [YTD Revenue], pois
+// depende de CALCULATE + DATESYTD sobre dim_date (inteligência de tempo).
+// Mantida referenciada aqui por rastreabilidade com o catálogo de KPI.
+// Rótulo obrigatório quando o período inclui novembro: "YTD até
+// 10/Nov/2024 (mês parcial)" — aplicado no visual, não na medida.
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// KPI 6 — Revenue vs Target
+// Fórmula (kpi_catalog.md #6): Total Revenue (por user_id, no período) /
+// (targets.'monthly revenue target' × nº de meses completos no período
+// filtrado). targets tem 1 valor de meta por cliente, sem dimensão de
+// mês — tratado como constante mensal (premissa registrada, não
+// confirmada pelo PDF nem pelos dados).
+//
+// "Nº de meses completos no período filtrado" é operacionalizado como a
+// contagem de meses-calendário distintos presentes no contexto de filtro
+// de dim_date, EXCLUINDO novembro/2024 do multiplicador por ser parcial
+// (conforme regra do catálogo: "novembro parcial não entra no
+// multiplicador de meses completos, mas sua receita realizada pode ser
+// somada ao numerador"). Isso é simplificado aqui assumindo que o
+// filtro de período é sempre um conjunto de meses contíguos a partir de
+// janeiro/2024 (único cenário observável no dataset); se o usuário
+// aplicar um filtro de datas arbitrário e não alinhado a mês-calendário,
+// esta medida pode sobre/sub-contar meses completos — limitação
+// documentada em validation/dax_validation.md.
+// ---------------------------------------------------------------------
+Complete Months In Period =
+VAR MaxDateInFilter = MAX ( dim_date[Date] )
+VAR IsNovemberPartial =
+    YEAR ( MaxDateInFilter ) = 2024 && MONTH ( MaxDateInFilter ) = 11
+VAR DistinctMonthsInFilter =
+    COUNTROWS ( SUMMARIZE ( dim_date, dim_date[Year], dim_date[Month] ) )
+RETURN
+    IF ( IsNovemberPartial, DistinctMonthsInFilter - 1, DistinctMonthsInFilter )
+
+Monthly Target =
+SUM ( targets[monthly revenue target] )
+
+Revenue vs Target =
+DIVIDE ( [Total Revenue], [Monthly Target] * [Complete Months In Period] )
+
+// ---------------------------------------------------------------------
+// KPI 7 — Order Lines by Category
+// Rótulo obrigatório no visual: "Linhas de pedido por categoria" ou
+// "Presença de categoria em pedidos" — NUNCA "Receita por categoria de
+// produto" (não é receita, é contagem de ocorrência de item em pedido,
+// kpi_catalog.md #7).
+// Depende do relacionamento fact_orders[product_id] -> dim_product[item_id]
+// (dim_product já deduplicada por DISTINCT item_id, achado #4).
+// Categoria nula (5 item_id, achado #5) deve aparecer como bucket
+// explícito "Categoria não informada" — tratado via dim_product
+// (coluna category com SUBSTITUTE/COALESCE de BLANK -> "Categoria não
+// informada" no Power Query ou em coluna calculada de dim_product;
+// não implementado como lógica de medida DAX para evitar duplicar essa
+// transformação em toda medida que usar category).
+// ---------------------------------------------------------------------
+Order Lines by Category =
+COUNTROWS ( fact_orders )
+// Uso: colocar esta medida em uma matriz/gráfico de barras com
+// dim_product[category] (ou dim_product[category_display], já tratada
+// para nulos) no eixo de categoria. O contexto de filtro de categoria
+// vem do relacionamento fact_orders[product_id] -> dim_product[item_id],
+// não de um GROUPBY explícito dentro da medida — mantém a medida simples
+// e reutilizável em qualquer visual.
+
+// ---------------------------------------------------------------------
+// KPI 5 — Top 5 Products (by order frequency)
+// Decisão final confirmada pelo dono do projeto em 2026-10-02
+// (kpi_catalog.md KPI 5; analytics_handoff.json, kpi "Top 5 Products",
+// status "confirmed"). NÃO é receita — é frequência de presença em
+// pedidos distintos. A alternativa de rateio de receita foi testada e
+// formalmente rejeitada (docs/discovery/revenue_allocation_test.md);
+// este item não é mais um gap aberto, não está mais bloqueado.
+//
+// Fórmula do catálogo: COUNT(DISTINCT order_id) agrupado por product_id,
+// ordenado desc, top 5.
+//
+// Implementação em duas medidas, seguindo o mesmo padrão de
+// "Order Lines by Category": a medida de valor é simples e reutilizável
+// (contexto de filtro vem do relacionamento fact_orders[product_id] ->
+// dim_product[item_id]); o recorte "top 5" é aplicado como filtro de
+// nível de visual (TopN por esta medida, descendente) sobre
+// dim_product[item_id]/[product_name_display] no eixo — não um TOPN()
+// fixo dentro da medida — para que o mesmo valor funcione em cartão,
+// tabela completa de produtos ou visual filtrado a 5.
+// ---------------------------------------------------------------------
+Product Order Frequency =
+DISTINCTCOUNT ( fact_orders[order_id] )
+// Rótulo obrigatório no visual: "Top 5 Products by order frequency" /
+// "Top 5 produtos por frequência de pedidos" — NUNCA formatação de
+// moeda, NUNCA rótulo "receita" ou "revenue" (handoff.json,
+// mandatory_label). Uso: aplicar filtro de visual TopN = 5 por esta
+// medida (ordem descendente) com dim_product[item_id] (ou
+// [product_name_display], se existir nome tratado) no eixo de
+// categoria/produto. Mesma base de relacionamento já validada em
+// "Order Lines by Category" (176 product_id distintos em orders, 0
+// órfãos contra items).

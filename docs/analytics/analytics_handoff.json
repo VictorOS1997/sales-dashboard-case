@@ -1,0 +1,154 @@
+{
+  "from": "analytics-architect",
+  "to": ["dashboard-designer", "dax-engineer"],
+  "source_artifacts": [
+    "docs/Power_BI_–_Activities_Data.pdf",
+    "docs/discovery/eda_summary.json",
+    "docs/discovery/data_dictionary.md",
+    "docs/discovery/data_quality_report.md",
+    "docs/discovery/eda_report.md",
+    "docs/discovery/data_profile.csv",
+    "docs/discovery/revenue_allocation_test.md"
+  ],
+  "central_problem": "Build a star-schema Power BI dashboard (executive, time, product, customer views) on a small beverage-sales dataset whose fact table (PBI_orders) has revenue stored at order grain but repeated on every order-line row; naive per-row SUM inflates Total Revenue ~8.9x (5,396,656.69 vs correct 606,144.09).",
+  "mandatory_data_fixes_before_any_measure": [
+    {
+      "fix": "Deduplicate fact_orders to 1 row per order_id before summing revenue (or aggregate revenue via a dimension/table keyed by order_id).",
+      "reason": "orders.revenue is constant per order_id (0/356 orders with >1 distinct revenue value).",
+      "reference_value": {"correct_total_revenue": 606144.09, "naive_sum_all_rows": 5396656.69, "rows": 1660, "distinct_orders": 356}
+    },
+    {"fix": "DISTINCT on all 5 columns of PBI_orders before any line-level count (removes 9 fully-duplicated rows)."},
+    {"fix": "DISTINCT on item_id (+ category) in PBI_items before using as dim_product (removes 99 duplicated item_id / 94 fully-duplicate rows; verified 0 category conflicts)."},
+    {"fix": "Build De-Para for city: SP->São Paulo, RJ->Rio de Janeiro, Campinas unchanged; 1 null user city -> 'Not informed' (not dropped)."},
+    {"fix": "Flag November 2024 as partial month (data only through 2024-11-10) in any date dimension / measure that supports MoM or YTD."}
+  ],
+  "kpis": [
+    {
+      "name": "Total Revenue",
+      "formula": "SUM(revenue) over DISTINCT order_id (order grain, not order-line grain)",
+      "fields": ["orders.order_id", "orders.revenue", "orders.order_date"],
+      "grain": "order (deduplicated)",
+      "filters": ["period", "customer", "city", "customer_category"],
+      "validation_reference": 606144.09,
+      "limitations": ["Currency/unit not confirmed by source PDF or data."]
+    },
+    {
+      "name": "Average Ticket",
+      "formula": "SUM(revenue, order grain) / COUNT(DISTINCT order_id)",
+      "fields": ["orders.order_id", "orders.revenue"],
+      "grain": "order",
+      "filters": ["period", "customer"],
+      "decision": "40 zero-revenue orders (3 restaurant customers) are KEPT in numerator and denominator by default — no evidence they are load errors.",
+      "limitations": ["Decision on revenue=0 orders is a registered assumption, not a data certainty."]
+    },
+    {
+      "name": "Month-over-Month Growth %",
+      "formula": "(Total Revenue[month] - Total Revenue[month-1]) / Total Revenue[month-1]",
+      "fields": ["orders.order_date", "Total Revenue measure"],
+      "grain": "month",
+      "filters": ["customer", "city", "customer_category"],
+      "required_treatment": "Every visual showing MoM must flag November 2024 as a partial month (data through day 10 only). January has no prior month (must render N.A., not 0%).",
+      "limitations": ["No 2023 data; YoY not computable."]
+    },
+    {
+      "name": "Year-to-Date Revenue",
+      "formula": "Cumulative SUM of Total Revenue measure from January through selected/current month",
+      "fields": ["orders.order_date", "Total Revenue measure"],
+      "grain": "month (cumulative)",
+      "required_treatment": "Label as 'YTD through 2024-11-10 (partial month)' when November is included.",
+      "limitations": ["Single year of data — no YTD year-over-year comparison possible."]
+    },
+    {
+      "name": "Top 5 Products",
+      "status": "confirmed",
+      "formula": "COUNT(DISTINCT order_id) grouped by product_id, top 5 descending",
+      "fields": ["orders.product_id", "orders.order_id", "items.item_id"],
+      "grain": "product",
+      "filters": ["period", "customer", "city", "customer_category"],
+      "reformulated_from": "Top 5 products by revenue (requested in case PDF)",
+      "reason_for_reformulation": "orders.revenue is order-grain only; no unit price or per-item allocation exists in raw data. Exact per-product revenue is not computable.",
+      "mandatory_label": "Must be displayed as 'Top 5 Products by order frequency' — never formatted as currency or titled 'revenue'.",
+      "rejected_alternative": "Equal-split allocation of order revenue across its line items — tested and formally rejected (docs/discovery/revenue_allocation_test.md): median CV 60% across 131 testable products, 49121 (beer, 116 orders) implied price ranging R$32.58-R$11,465.11 (~350x), 'nab' category implied-price max/min ratio of 2,146x and higher average than beer/liquor (inverting the pricing hypothesis), and a single outlier order (7001094580, R$125,476.66, 14 line items) contaminating 14 products with an inflated implied price. Decision: final, confirmed by project owner on 2026-10-02 — frequency is the sole official ranking criterion.",
+      "footer_disclaimer": "Este ranking mostra os produtos que aparecem no maior número de pedidos — não os que geram mais receita. Os dados de origem registram apenas o valor total de cada pedido, não o preço de cada item, então não é possível calcular receita por produto individual. Testamos dividir a receita igualmente entre os itens do pedido como alternativa, mas o resultado foi inconsistente (preços implícitos variando até 350x para o mesmo produto) e foi descartado. Por isso, o critério oficial do Top 5 é frequência em pedidos.",
+      "footer_disclaimer_placement": "Fixed, non-dismissible banner on the Product Analysis page (same treatment as the n=8 sample-size banner on Customer Analysis) — must not be removable/hidden by any filter."
+    },
+    {
+      "name": "Revenue vs Target",
+      "formula": "Total Revenue(user_id, period) / (targets.'monthly revenue target' * count_of_complete_months_in_period)",
+      "fields": ["orders.revenue", "orders.user_id", "orders.order_date", "targets.user_id", "targets.monthly revenue target"],
+      "grain": "customer",
+      "filters": ["period", "city", "customer_category"],
+      "limitations": ["targets has a single monthly value per customer with no month dimension — treated as a constant monthly target across the whole period, an unconfirmed assumption."]
+    },
+    {
+      "name": "Order Lines by Product Category",
+      "formula": "COUNT(order lines) grouped by items.category, joined orders.product_id = items.item_id (deduplicated items)",
+      "fields": ["orders.product_id", "items.item_id", "items.category"],
+      "grain": "category",
+      "mandatory_label": "Must be titled 'Order lines by category' or 'Category presence in orders' — never 'Revenue by category'.",
+      "null_handling": "5 item_id with null category (incl. item_id 19045, which has recorded sales) shown as explicit 'Category not informed' bucket, not dropped."
+    }
+  ],
+  "known_data_quality_findings_carried_forward": [
+    {"id": "revenue_order_grain", "severity": "blocker", "status": "resolved_by_kpi_formula"},
+    {"id": "orders_9_full_duplicates", "severity": "major", "status": "resolved_by_dedupe_instruction"},
+    {"id": "revenue_zero_40_rows", "severity": "major", "status": "decision_made_kept_in_avg_ticket"},
+    {"id": "items_99_duplicate_item_id", "severity": "major", "status": "resolved_by_distinct_instruction"},
+    {"id": "items_5_null_category", "severity": "minor_to_major", "status": "decision_made_explicit_bucket"},
+    {"id": "city_spelling_inconsistency", "severity": "major", "status": "resolved_by_de_para"},
+    {"id": "november_2024_partial_month", "severity": "major", "status": "decision_made_mandatory_visual_flag"},
+    {"id": "only_8_customers", "severity": "structural", "status": "decision_made_mandatory_banner_on_customer_page"}
+  ],
+  "explicit_gaps_not_sustainable_by_data": [
+    {
+      "case_requirement": "Top 5 products (implied: by revenue)",
+      "status": "confirmed",
+      "gap": "No unit price or revenue allocation per product line exists in raw data; exact product-level revenue is not computable. Equal-split allocation was tested as an alternative and formally rejected for statistical unreliability (docs/discovery/revenue_allocation_test.md).",
+      "resolution": "Reformulated as Top 5 Products by order frequency, explicitly labeled as such in every visual. Final, confirmed by project owner on 2026-10-02 — not open for re-decision."
+    },
+    {
+      "case_requirement": "Product-level revenue analysis in general (Product Analysis page)",
+      "gap": "Same root cause as above.",
+      "resolution": "Product Analysis page uses order-line frequency and category presence counts, never currency-formatted product revenue."
+    },
+    {
+      "case_requirement": "Customer analysis depth / statistical segmentation",
+      "gap": "Only 8 distinct customers in the entire dataset.",
+      "resolution": "Mandatory, non-dismissible banner on Customer Analysis page stating the sample-size limitation; no causal or generalizable claims."
+    },
+    {
+      "case_requirement": "Year-over-year analysis (implied by 'time-based analysis (month/year)')",
+      "gap": "Single calendar year (2024) only, no prior-year data.",
+      "resolution": "Only month-over-month and YTD implemented; YoY explicitly out of scope, documented in Conclusion tab."
+    }
+  ],
+  "dashboard_pages": [
+    "Executive Overview",
+    "Time Analysis",
+    "Product Analysis",
+    "Customer Analysis",
+    "Conclusion (hidden tab)"
+  ],
+  "required_interactivity": [
+    {
+      "case_requirement": "Two different charts that overlap and are displayed according to the selected chart type",
+      "implementation_page": "Time Analysis",
+      "implementation": "Toggle between monthly Revenue (line) and monthly Order Count (column), same time axis, single chart-type selector."
+    },
+    {
+      "case_requirement": "Single chart with a toggle between absolute values and percentages",
+      "implementation_page": "Customer Analysis",
+      "implementation": "Revenue by customer, toggle between absolute R$ and % share of total revenue."
+    }
+  ],
+  "deliverables": [
+    "docs/analytics/business_context.md",
+    "docs/analytics/analytical_storyline.md",
+    "docs/analytics/kpi_catalog.md",
+    "docs/analytics/dashboard_blueprint.md",
+    "docs/analytics/visual_specification.md",
+    "docs/analytics/analytics_handoff.json"
+  ],
+  "status": "ready_for_human_checkpoint",
+  "note": "Per project workflow (CLAUDE.md), a human checkpoint is required to approve this analytical direction before Dashboard Designer and DAX Engineer begin implementation in parallel."
+}

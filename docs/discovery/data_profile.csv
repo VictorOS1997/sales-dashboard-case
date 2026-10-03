@@ -1,0 +1,15 @@
+table,column,dtype,n_rows,n_nulls,pct_nulls,n_unique,min,max,mean
+items,item_id,int64,413,0,0.0,314,2395,2498476,50462.36
+items,category,str,413,5,1.21,4,,,
+orders,order_id,int64,1660,0,0.0,356,1004086642,9985002927,5363669466.65
+orders,order_date,datetime64[us],1660,0,0.0,181,2024-01-02 00:00:00,2024-11-10 00:00:00,
+orders,user_id,int64,1660,0,0.0,8,10560208,86808677,63257922.7
+orders,product_id,int64,1660,0,0.0,176,10051,99105,53671.26
+orders,revenue,float64,1660,0,0.0,304,0.0,125476.66,3251.0
+targets,user_id,int64,8,0,0.0,8,10560208,86808677,56667859.88
+targets,category,str,8,0,0.0,3,,,
+targets,city,str,8,0,0.0,3,,,
+targets,monthly revenue target,int64,8,0,0.0,8,50,150000,30193.75
+users,user_id,int64,8,0,0.0,8,10560208,86808677,56667859.88
+users,category,str,8,0,0.0,3,,,
+users,city,str,8,1,12.5,5,,,

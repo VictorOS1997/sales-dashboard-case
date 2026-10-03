@@ -1,0 +1,5 @@
+# Apresentação/background editado manualmente — binário grande, não versionar
+design/pptx/*.pptx
+
+# Dados brutos — somente leitura, não versionar por padrão
+data/raw/*.xlsx
