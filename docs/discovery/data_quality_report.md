@@ -1,5 +1,17 @@
 # Data Quality Report — bi-case-pbi
 
+> **Changelog — 2026-10-02**: o Achado #5 foi reformulado. A redação original ("5 item_id sem
+> categoria preenchida: 9001, 19045, 13105, 14684, 51849") estava tecnicamente imprecisa: os 5
+> `item_id` citados pertencem ao grupo de duplicados já identificado no Achado #4, e em cada um
+> deles a categoria **existe** — está preenchida na linha duplicada irmã, nula apenas na outra.
+> A imprecisão foi descoberta durante a montagem do modelo no Power BI (pelo usuário), não é um
+> erro do EDA original na extração/leitura dos dados (os números de nulos em si estavam
+> corretos) — foi uma formulação imprecisa da conclusão de negócio sobre um dado que já estava
+> corretamente extraído. Correção também propagada para `data_dictionary.md` (linha `category`)
+> e verificada de forma independente antes da correção
+> (`groupby('item_id')['category'].apply(lambda s: (s.isna().sum(), s.notna().sum()))` → `(1,1)`
+> nos 5 casos).
+
 Método: perfilagem programática com pandas 3.0.6 / openpyxl 3.1.5 sobre os 4 arquivos de
 `data/raw/` (leitura completa, sem amostragem). Scripts de perfilagem foram executados nesta
 sessão e removidos após a extração dos números abaixo (não fazem parte do entregável; os
@@ -79,17 +91,36 @@ não há conflito de valores).
 
 ---
 
-## Achado #5 — `PBI_items.xlsx`: 5 linhas (1.21%) com `category` nula
+## Achado #5 — `PBI_items.xlsx`: 5 `item_id` (do grupo de duplicados do Achado #4) têm `category` nula em UMA das duas linhas duplicadas, mas preenchida na outra
 
-**Evidência**: item_id 9001, 19045, 13105, 14684, 51849 sem categoria preenchida.
+**Evidência**: dos 5 `item_id` com alguma linha de `category` nula (9001, 19045, 13105, 14684,
+51849), nenhum é "sem categoria" de fato — todos pertencem ao grupo de 99 `item_id` duplicados do
+Achado #4 e, em cada um, exatamente uma das duas linhas tem `category` nula e a outra tem a
+categoria preenchida (confirmado via
+`df[df.item_id.isin(ids)].groupby('item_id')['category'].apply(lambda s: (s.isna().sum(), s.notna().sum()))`
+→ `(1, 1)` nos 5 casos):
 
-**Ressalva**: `item_id 19045` aparece em `orders.product_id` (pedido 1876316172, ver amostra no
-dicionário de dados) — ou seja, há vendas de um produto sem categoria conhecida, o que vai gerar
-um bucket "(em branco)" em qualquer análise por categoria de produto se não tratado.
+| item_id | linha com categoria nula (index) | linha com categoria preenchida (index) | categoria disponível |
+|---|---|---|---|
+| 9001   | 51  | 365 | nab   |
+| 19045  | 372 | 58  | beer  |
+| 13105  | 385 | 71  | beer  |
+| 14684  | 398 | 84  | beer  |
+| 51849  | 411 | 97  | nab   |
 
-**Severidade**: MINOR (5 produtos) mas MAJOR se algum desses 5 tiver volume relevante de vendas
-— não verificado quantitativamente (fora do escopo desta rodada; recomenda-se checagem pelo
-Analytics Architect antes de fechar a dimensão de produto).
+**Ressalva de implementação (crítica)**: como a categoria *existe* na linha duplicada irmã, um
+`Remove Duplicates` simples no Power Query (que mantém a primeira linha encontrada, de forma
+arbitrária) pode reter justamente a linha com `category` nula — por exemplo, para `item_id 9001`
+a primeira ocorrência (index 51) é a que está nula. O resultado seria um bucket "(em branco)"
+evitável em qualquer análise por categoria, mesmo havendo dado correto disponível na própria
+tabela. **Ação recomendada**: ao deduplicar `dim_product`, usar uma agregação que prefira
+explicitamente o valor não nulo de `category` por `item_id` — ex. `Table.Group` com
+`List.RemoveNulls(...){0}` ou `List.Max`/`List.First` sobre a lista sem nulos — em vez de um
+`Remove Duplicates` ingênuo sobre a coluna `item_id`.
+
+**Severidade**: MINOR — não há produto realmente sem categoria conhecida nos dados brutos; o risco
+é inteiramente de implementação (deduplicação ingênua descartando o valor correto). Se a
+deduplicação for feita com a regra acima, este achado não gera impacto algum no modelo final.
 
 ---
 

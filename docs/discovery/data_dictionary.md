@@ -23,7 +23,7 @@ Grão aparente: um produto por linha (dimensão de produto/item).
 | Coluna | Tipo | % nulos | Cardinalidade | Observações |
 |---|---|---|---|---|
 | item_id | int64 | 0% | 314 valores únicos em 413 linhas | **Chave candidata, mas NÃO é única na tabela** — 99 item_id aparecem em mais de uma linha (198 linhas envolvidas). Em todos os casos verificados a categoria é idêntica entre as linhas duplicadas (0 conflitos de categoria) — ver `data_quality_report.md`. |
-| category | string | 1.21% (5 linhas) | 4 valores: `beer`, `nab`, `liquor`, `soda` | Categoria de produto (tipo de bebida). `nab` provavelmente = "non-alcoholic beverage". 5 item_id sem categoria preenchida. |
+| category | string | 1.21% (5 linhas) | 4 valores: `beer`, `nab`, `liquor`, `soda` | Categoria de produto (tipo de bebida). `nab` provavelmente = "non-alcoholic beverage". 5 linhas nulas, mas todas pertencem a `item_id` duplicados (ver Achado #4) cuja categoria está preenchida na linha duplicada irmã — nenhum `item_id` está de fato sem categoria conhecida (ver Achado #5 revisado em `data_quality_report.md`); ao deduplicar, preferir o valor não nulo em vez de `Remove Duplicates` ingênuo. |
 
 Interpretação de negócio: tabela de produtos (bebidas) com categoria de tipo de bebida —
 candidata a dimensão `dim_product` no modelo estrela, após deduplicação de `item_id`.
