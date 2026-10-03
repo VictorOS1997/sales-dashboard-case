@@ -28,6 +28,8 @@ Case/dados de apoio: `docs/Power_BI_–_Activities_Data.pdf`.
 | 04 DAX & Power BI Engineer | `.claude/agents/dax-engineer.md` | Opus | Implementação e testes |
 | 05 GitHub Operator | `.claude/agents/github-operator.md` | Haiku | Só com autorização |
 | 06 Independent BI Reviewer | `.claude/agents/bi-reviewer.md` | Opus | Auditoria independente |
+| 07 Cleanup Executor | `.claude/agents/cleanup-executor.md` | Sonnet | Execução mecânica, sem decisão de conteúdo |
+| 08 PDM Documenter | `.claude/agents/pdm-documenter.md` | Opus | Consolida projeto em PDF + reescreve README |
 
 ## Fluxo de execução
 
@@ -47,17 +49,15 @@ Não é obrigatório acionar todos os agentes em toda solicitação — delegar 
 ```
 bi-case-pbi/
 ├── CLAUDE.md
-├── .claude/agents/          # definição dos 6 agentes
+├── .claude/agents/          # definição dos 8 agentes
 ├── docs/
 │   ├── discovery/           # saída do EDA Specialist
 │   ├── analytics/           # saída do Analytics Architect
-│   ├── design/              # saída do Dashboard Designer
-│   ├── implementation/      # saída do DAX Engineer
-│   └── review/              # saída do BI Reviewer
+│   └── review/              # saída do BI Reviewer e do PDM Documenter
 ├── data/raw/
-├── design/{pptx,exports,assets}/
-├── powerbi/{dax,model,validation}/
-└── reports/{figures,final}/
+├── design/{pptx,exports}/   # saída do Dashboard Designer (pptx = fonte da verdade editada pelo usuário)
+├── powerbi/{dax,model,validation}/  # saída do DAX Engineer
+└── reports/figures/         # saída do EDA Specialist
 ```
 
 ## Contratos de comunicação
