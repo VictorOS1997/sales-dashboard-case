@@ -86,7 +86,7 @@ Ver `kpi_catalog.md` para o detalhe formal; resumo das decisões de maior impact
   definição final e a razão da escolha.
 - **Cidade (De-Para)**: padronizada para 3 valores canônicos (São Paulo, Rio de Janeiro,
   Campinas) a partir das 5 grafias brutas; 1 cliente com cidade nula é mantido com rótulo
-  explícito "Cidade não informada", não descartado.
+  explícito "Não informado", não descartado.
 - **Novembro/2024 parcial**: qualquer KPI de MoM/YTD que toque novembro deve exibir um
   indicador visual de "mês parcial (até dia 10)" — ver `dashboard_blueprint.md` e
   `visual_specification.md`. Não comparar novembro a outros meses fechados sem esse aviso.

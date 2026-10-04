@@ -218,3 +218,23 @@ pontual de conteúdo/estilo no pptx (não envolve dados, DAX ou decisão de neg�
 parte já está fechada), mas precisa ser resolvida antes de publicar, pois é visualmente
 confuso para quem abrir o dashboard. Recomenda-se ao Orchestrator encaminhar R1 ao Dashboard
 Designer para correção, com autorização do usuário por se tratar de edição manual dele.
+
+---
+
+## Fechamento do projeto (Orchestrator, 2026-10-03)
+
+Addendum posterior à auditoria. O texto acima é o registro original do Reviewer e não foi alterado.
+O dashboard foi montado no Power BI Desktop (`pbi_case.pbix`, 5 páginas) e todas as medidas foram
+validadas contra a referência em pandas (`powerbi/validation/dax_validation.md`).
+
+| ID | Sev. | Status | Como foi encerrado |
+|---|---|---|---|
+| R1 | MAJOR | Fechado | Card "Top 5 Products" corrigido pelo dono do projeto no novo design (backgrounds EN em `design/pptx/background/`) |
+| R2 | OBS | — | Sem ação necessária |
+| R3 | MINOR | Fechado | Medidas executadas no motor Power BI Desktop; resultados em `dax_validation.md` |
+| R4 | OBS | — | Sem ação necessária |
+| R5 | MINOR | Aceito | Posição do banner n=8 aceita como não-bloqueante pelo auditor; mantida |
+| R6 | MINOR | Fechado | `CLAUDE.md` descreve a estrutura real; nenhuma pasta vazia restante |
+| R7 | MINOR | Aceito como limitação | Scripts de perfilagem do EDA seguem não versionados; números reproduzíveis a partir de `data/raw/` e ambiente documentado no README |
+
+Nenhum BLOCKER ou MAJOR pendente. Projeto encerrado.

@@ -41,7 +41,7 @@ calcular**, não a sintaxe DAX.
 - **Campos**: `orders.order_id`, `orders.revenue`.
 - **Granularidade**: total, por mês, por cliente.
 - **Filtros aplicáveis**: mesmos de Total Revenue.
-- **Decisão sobre revenue=0 (achado #3)**: os 40 pedidos com revenue=0 **permanecem no
+- **Decisão sobre revenue=0 (achado #3)**: os 26 pedidos com revenue=0 (40 linhas) **permanecem no
   numerador E no denominador** — não há evidência nos dados de que sejam erro de carga
   (distribuídos em 9 de 11 meses, concentrados em 3 clientes restaurant, sem padrão de
   sistema). Tratá-los como exclusão seria assumir "erro" sem prova; mantê-los é a opção
@@ -190,15 +190,13 @@ calcular**, não a sintaxe DAX.
 ## 8. Medidas auxiliares as-built (além do catálogo original)
 
 Medidas criadas na implementação para suportar visuais. **Nenhuma altera a definição dos KPIs 1–7.**
-O código DAX não está versionado em `powerbi/` no momento desta nota; as descrições abaixo são
-funcionais (verificadas pelo usuário no Power BI Desktop) e a fórmula exata deve ser conferida
-contra o modelo.
+O código DAX está versionado em `powerbi/dax/04_dashboard_helpers.dax`; as descrições abaixo são funcionais e foram validadas no Power BI Desktop (ver `powerbi/validation/dax_validation.md`).
 
 | Medida | Função / fórmula (descritiva) | Grão | Limitação |
 |---|---|---|---|
 | Partial Month Note | Texto/rótulo que sinaliza mês parcial (novembro, até dia 10); usado no tooltip da tendência mensal (p1) | Mês | Depende da flag de mês parcial; não é KPI |
 | YTD Title | Título dinâmico do visual de YTD (p2) | Contexto de filtro de período | Apenas texto; não calcula valor |
-| MoM Color | Regra de cor das colunas de MoM (p2): parcial `#5C4A12`; acima da média `#6FA66B`; negativo `#8A867E`; demais ouro `#E5B611` | Mês | Cor codifica regra visual, não novo KPI; "média" refere-se à média do MoM exibido |
+| MoM Color | Regra de cor das colunas de MoM (p2): parcial `#5C4A12`; acima da média `#6FA66B`; negativo `#8A867E`; demais ouro `#E5B611` | Mês | Cor codifica regra visual, não novo KPI; "média" = média simples dos MoM mensais dos meses no filtro (≈ +26,4% sem filtro) |
 | Revenue % of Total | Receita do cliente / receita total (KPI 1), usada no toggle R$ <-> % (p4) | Cliente | Base de 8 clientes; % sobre o total no contexto de filtro |
 | Target in Period | Meta (KPI 6) ajustada ao período filtrado, usada no clustered bar Revenue vs Target (p4) | Cliente, período | Mantém a premissa de meta constante mensal (seção 6) |
 | Unsold Products | Produtos do catálogo sem venda no período: 138 de 314 (p3) | Catálogo | Contexto de catálogo, não de receita |

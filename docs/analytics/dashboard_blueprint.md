@@ -70,7 +70,7 @@ detalhe de cada visual).
 - Período (date range / slicer de mês-ano), com novembro visualmente identificado como parcial
   em qualquer seletor.
 - Cliente (user_id / nome do estabelecimento).
-- Cidade (3 valores canônicos pós De-Para).
+- Cidade (3 cidades canônicas pós De-Para + "Não informado").
 - Categoria de estabelecimento (bar/restaurant/shop).
 
 ## Dependências e ordem de implementação sugerida
@@ -107,5 +107,4 @@ definição de KPI; os blocos acima permanecem como especificação.
 - **Achado #5 resolvido no ETL**: `dim_product` via Group By `item_id` + Max(`category`), 314
   linhas, todas com categoria; não há bucket "Categoria não informada" na prática nem limitação
   de "5 produtos sem categoria" (ver `data_quality_report.md`, changelog, commit bb142b6).
-- **Item em aberto**: idioma do dashboard (PT vs EN) a ser padronizado pelo usuário antes da
-  revisão; decisão não tomada aqui.
+- **Idioma (as-built)**: backgrounds das páginas e a página 5 (Conclusion) estão em inglês; os textos dinâmicos gerados por medida (`Partial Month Note`, `YTD Title`) e os nomes de campo do modelo permanecem em português. Registrado como estado final entregue, sem padronização adicional.

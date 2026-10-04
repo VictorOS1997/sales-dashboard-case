@@ -65,7 +65,7 @@ Power BI Desktop", essa pendência foi fechada na seção final.
   por pedido). O kpi_catalog.md já alerta para não confundir os dois
   (KPI 2, "Evidência de validação"). A medida implementada aqui usa o
   grão correto (pedido), não a média de linha.
-- **Decisão de revenue=0**: confirmado que os 40 pedidos de revenue zero
+- **Decisão de revenue=0**: confirmado que os 26 pedidos de revenue zero (40 linhas)
   permanecem no numerador (soma, sem alteração — zero não afeta a soma) e
   no denominador (`Distinct Order Count` conta todos os 356 order_id,
   incluindo os de revenue zero) — consistente com a decisão registrada em
@@ -249,7 +249,7 @@ Evidência do teste, reproduzida aqui para rastreabilidade:
 5. Um único pedido-outlier (order_id 7001094580, R$ 125.476,66, 14 itens
    distintos, provavelmente pedido corporativo/atacado) injeta um preço
    implícito de R$ 8.962,62 em 14 produtos de categorias distintas
-   (incluindo 5 produtos nab que só aparecem nesse pedido) — isso por si
+   (incluindo 8 produtos nab que só aparecem nesse pedido) — isso por si
    só já deslocaria produtos para o topo de um ranking de "receita" sem
    relação com seu volume real de vendas.
 6. Rateio proporcional (por quantidade) não é nem testável: não existe

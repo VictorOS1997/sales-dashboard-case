@@ -118,6 +118,8 @@ explicitamente o valor não nulo de `category` por `item_id` — ex. `Table.Grou
 `List.RemoveNulls(...){0}` ou `List.Max`/`List.First` sobre a lista sem nulos — em vez de um
 `Remove Duplicates` ingênuo sobre a coluna `item_id`.
 
+**Status: Resolved in ETL** (2026-10-03) — `dim_product` = Group By `item_id` + `Max(category)`, 314 linhas, todas com categoria.
+
 **Severidade**: MINOR — não há produto realmente sem categoria conhecida nos dados brutos; o risco
 é inteiramente de implementação (deduplicação ingênua descartando o valor correto). Se a
 deduplicação for feita com a regra acima, este achado não gera impacto algum no modelo final.
@@ -183,7 +185,7 @@ afirmação que pode ser feita (ex.: evitar extrapolações causais).
 | #2 orders duplicados (9 linhas) | MAJOR | Contagem de itens/pedidos |
 | #3 revenue = 0 (40 linhas) | MAJOR/MINOR | Average Ticket, definição de "pedido válido" |
 | #4 item_id duplicado (99 produtos) | MAJOR | Dimensão de produto |
-| #5 category nula em items (5 linhas) | MINOR/MAJOR | Análise por categoria de produto |
+| #5 category nula em items (5 linhas) | MINOR — resolvido no ETL | Nenhum (Group By `item_id` + `Max(category)` no Power Query) |
 | #6 city inconsistente em users/targets | MAJOR | Segmentação geográfica |
 | #7 cobertura temporal incompleta (nov parcial, 1 ano só) | MAJOR | MoM, YTD, sazonalidade |
 | #8 base de 8 clientes | Estrutural | Significância de "análise de cliente" |

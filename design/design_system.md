@@ -1,5 +1,11 @@
 # Design System — Dashboard Backgrounds (bi-case-pbi)
 
+> **Nota de encerramento (2026-10-03):** este documento registra o design de 2026-10-02. As pendências
+> descritas abaixo sobre o card "Top 5 Produtos" (estilo, subtítulo e corpo) foram resolvidas pelo dono do
+> projeto na versão final dos backgrounds em inglês (`design/pptx/background/*.png`,
+> `ABInBev_dashboard_background_EN.pptx`). `layout_coordinates.json` e `design/exports/*.png` refletem a
+> versão de 2026-10-02 e não foram regenerados; a fonte da verdade visual é a pasta `design/pptx/background/`.
+
 **Atualizado em 2026-10-02.** Esta versão descreve fielmente
 `design/pptx/ABInBev_dashboard_background.pptx` — o arquivo que o usuário editou
 manualmente (ajuste de *placement* e colorimetria) e que agora é a fonte da verdade

@@ -95,9 +95,9 @@ que motivou o teste (bebida alcoólica mais cara que não-alcoólica).
 
 Este único pedido tem `revenue = R$ 125.476,66` e **14 itens distintos** (provavelmente um pedido
 corporativo/atacado, não uma compra unitária de consumidor). O rateio igualitário atribui
-**R$ 8.962,62 por item** a cada um dos 14 produtos do pedido — incluindo 7 itens da categoria **nab**
+**R$ 8.962,62 por item** a cada um dos 14 produtos do pedido — incluindo 8 itens da categoria **nab**
 (ex.: `product_id` 14132, 27665, 27935, 62234, 83261, 87039, 89368, 89964), que deveriam custar na faixa
-de R$ 4 a R$ 85 segundo o resto da amostra. Para os 5 produtos nab que aparecem *somente* neste pedido,
+de R$ 4 a R$ 85 segundo o resto da amostra. Para os 8 produtos nab que aparecem *somente* neste pedido,
 o "preço implícito" registrado é exatamente R$ 8.962,62 — um valor ~100x a ~2000x maior que o preço
 desses mesmos produtos em outros contextos.
 

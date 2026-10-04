@@ -73,7 +73,7 @@ Regras de exibição:
 | Receita por cliente (R$ ↔ %) | Barra, toggle absoluto/percentual | KPI 1 por user_id | "Receita por Cliente" | **Requisito de interatividade #2**: toggle explícito "Valores absolutos" / "% do total" |
 | Receita vs Meta por cliente | Barra agrupada ou bullet chart | KPI 1 + KPI 6 | "Receita Realizada vs Meta" | — |
 | Receita por categoria de estabelecimento | Barra | KPI 1 agrupado por users.category | "Receita por Tipo de Estabelecimento" | — |
-| Receita por cidade | Mapa ou barra | KPI 1 agrupado por cidade (De-Para) | "Receita por Cidade" | 3 valores canônicos apenas; cliente sem cidade informada em bucket "Não informado" |
+| Receita por cidade | Mapa ou barra | KPI 1 agrupado por cidade (De-Para) | "Receita por Cidade" | 3 cidades canônicas (São Paulo, Rio de Janeiro, Campinas) + bucket "Não informado"; cliente sem cidade informada em bucket "Não informado" |
 | Aviso de amostra pequena | Banner de texto fixo, não removível por filtro | — | "Base de 8 clientes — leitura não generalizável" | Posicionado no topo da página, não no rodapé |
 
 ---
