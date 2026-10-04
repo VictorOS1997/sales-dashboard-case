@@ -65,7 +65,7 @@ herda credibilidade.
 ### Fechamento — "O que isso significa e o que não podemos afirmar"
 Aba oculta de Conclusão (requisito 5): síntese textual dos achados + bloco de limitações
 explícitas (grão de revenue corrigido, Top 5 por frequência não por receita, novembro parcial,
-base de 8 clientes, 5 produtos sem categoria, 40 linhas de revenue=0). Fecha o arco respondendo
+base de 8 clientes, 40 linhas de revenue=0; o achado #5 de categoria nula foi resolvido no ETL e não é mais limitação — ver `data_quality_report.md`, changelog 2026-10-02, commit bb142b6). Fecha o arco respondendo
 "o que aprendemos" e sendo transparente sobre "o que os dados não permitem concluir" — coerente
 com o princípio do projeto de não forçar conclusão sem sustentação.
 

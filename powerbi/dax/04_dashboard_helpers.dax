@@ -1,0 +1,93 @@
+// =====================================================================
+// 04_dashboard_helpers.dax — bi-case-pbi
+// DAX Engineer — medidas de apoio a visuais do dashboard (títulos
+// dinâmicos, cor condicional, % do total, meta no período, produtos sem
+// venda). Não alteram nenhuma definição de KPI de 01/02/03; apenas as
+// consomem. Validadas no Power BI Desktop em 2026-10-03 (ver
+// validation/dax_validation.md).
+//
+// Depende de: [Total Revenue] (01), [MoM Growth % ] (02),
+// [Monthly Target] e [Complete Months In Period] (02), dim_date com
+// IsPartialMonth (03) e das relações descritas em model/semantic_model.md
+// (dim_date -> fact_orders e dim_customer -> fact_orders incluídas).
+//
+// Lições aprendidas (MoM Color):
+// 1) A primeira versão usava AVERAGEX sobre ALLSELECTED(dim_date[MonthName])
+//    sem CALCULATE externo: o filtro do mês corrente vazava para dentro do
+//    AVERAGEX e a cor nunca ficava verde. A versão final usa
+//    CALCULATE(AVERAGEX(VALUES(dim_date[MonthName]), [MoM Growth %]),
+//    ALLSELECTED(dim_date)).
+// 2) Nomes de variáveis não podem colidir com funções DAX (ex.: LastDate
+//    foi renomeada para LastOrderDate).
+// =====================================================================
+
+// ---------------------------------------------------------------------
+// Partial Month Note — texto de aviso exibido quando o contexto contém o
+// mês parcial (novembro/2024). BLANK quando não há mês parcial no filtro.
+// ---------------------------------------------------------------------
+Partial Month Note =
+VAR IsPartial = CALCULATE ( COUNTROWS ( dim_date ), dim_date[IsPartialMonth] = TRUE ) > 0
+VAR LastOrderDate = CALCULATE ( MAX ( order_revenue[order_date] ), ALL ( dim_date ) )
+RETURN
+    IF ( IsPartial, "Mês parcial: dados até " & FORMAT ( LastOrderDate, "dd/MM/yyyy" ) )
+
+// ---------------------------------------------------------------------
+// YTD Title — título dinâmico do visual de YTD Revenue (kpi_catalog.md
+// KPI 4). Acrescenta ", mês corrente parcial" quando o contexto inclui o
+// mês parcial.
+// ---------------------------------------------------------------------
+YTD Title =
+VAR LastOrderDate = CALCULATE ( MAX ( order_revenue[order_date] ), ALL ( dim_date ) )
+VAR IsPartial = CALCULATE ( COUNTROWS ( dim_date ), dim_date[IsPartialMonth] = TRUE ) > 0
+RETURN
+    "YTD até " & FORMAT ( LastOrderDate, "dd/MM/yyyy" ) & IF ( IsPartial, ", mês corrente parcial", "" )
+
+// ---------------------------------------------------------------------
+// MoM Color — cor condicional (hex) para o formato de visuais de MoM.
+// BLANK se MoM for BLANK (janeiro); marrom escuro se mês parcial; verde
+// se acima da média de MoM do contexto selecionado; cinza se negativo;
+// amarelo caso contrário. Ver lições aprendidas no cabeçalho.
+// ---------------------------------------------------------------------
+MoM Color =
+VAR Mom = [MoM Growth %]
+VAR AvgMom =
+    CALCULATE (
+        AVERAGEX ( VALUES ( dim_date[MonthName] ), [MoM Growth %] ),
+        ALLSELECTED ( dim_date )
+    )
+VAR IsPartial = CALCULATE ( COUNTROWS ( dim_date ), dim_date[IsPartialMonth] = TRUE ) > 0
+RETURN
+    IF (
+        ISBLANK ( Mom ),
+        BLANK (),
+        IF (
+            IsPartial,
+            "#5C4A12",
+            IF ( Mom > AvgMom, "#6FA66B", IF ( Mom < 0, "#8A867E", "#E5B611" ) )
+        )
+    )
+
+// ---------------------------------------------------------------------
+// Revenue % of Total — participação do cliente na receita total dos
+// clientes selecionados (ALLSELECTED remove só o filtro do próprio
+// cliente na linha, respeitando slicers).
+// ---------------------------------------------------------------------
+Revenue % of Total =
+DIVIDE ( [Total Revenue], CALCULATE ( [Total Revenue], ALLSELECTED ( dim_customer ) ) )
+
+// ---------------------------------------------------------------------
+// Target in Period — meta acumulada no período (denominador de
+// Revenue vs Target). Mesma premissa de meta constante mensal; BLANK/0 de
+// Complete Months In Period (ex.: só novembro) propaga como 0.
+// ---------------------------------------------------------------------
+Target in Period =
+[Monthly Target] * [Complete Months In Period]
+
+// ---------------------------------------------------------------------
+// Unsold Products — nº de produtos de dim_product sem nenhuma linha em
+// fact_orders no contexto de filtro atual (período/cliente). Requer as
+// relações dim_date/dim_customer -> fact_orders. Validação: 138 sem
+// filtro; 282 para o cliente 37404863; 238 em maio.
+// ---------------------------------------------------------------------
+Unsold Products =
+COUNTROWS ( FILTER ( dim_product, ISEMPTY ( RELATEDTABLE ( fact_orders ) ) ) )

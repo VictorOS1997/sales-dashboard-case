@@ -38,7 +38,7 @@ erro ou queda, representa incompletude.
 | Visual | Tipo | Campos | Título | Observação |
 |---|---|---|---|---|
 | Top 5 Produtos | Barra horizontal | KPI 5 | "Top 5 Produtos por Nº de Pedidos" | **Critério fechado (não mais "em definição")**: frequência em pedidos. Subtítulo obrigatório: "frequência em pedidos — não representa receita" |
-| Participação por categoria | Pizza/donut ou barra 100% | KPI 7 | "Linhas de Pedido por Categoria de Bebida" | Bucket "Categoria não informada" sempre visível quando > 0; nunca formatar como moeda |
+| Participação por categoria | Pizza/donut ou barra 100% | KPI 7 | "Linhas de Pedido por Categoria de Bebida" | Achado #5 resolvido no ETL (4 categorias reais; "Categoria não informada" apenas fallback defensivo, hoje = 0 e não aparece); nunca formatar como moeda |
 | Produtos nunca vendidos | Cartão KPI | COUNT item_id não presentes em orders | "Produtos no Catálogo sem Venda no Período" | 138/314 — contexto, não alarme |
 | Disclaimer fixo da página | Banner de texto fixo, não removível por filtro (mesmo padrão do banner de n=8 em Customer Analysis) | — | — | Ver texto literal abaixo, em "Disclaimer fixo — Product Analysis". Posicionado em área fixa (rodapé ou topo da página, a critério do Design), sempre visível independente de filtro aplicado. |
 

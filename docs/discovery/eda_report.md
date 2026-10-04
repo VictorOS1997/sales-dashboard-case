@@ -50,8 +50,12 @@ necessária.
    redundantes (sem conflito de categoria) em `items`.
 3. 40 linhas de `orders` com `revenue = 0` (2,4%), concentradas em 3 clientes, todos
    `category = restaurant`.
-4. 5 produtos (de 413 linhas / 314 item_id) sem `category` preenchida; pelo menos 1 deles
-   (`item_id 19045`) tem vendas registradas em `orders`.
+4. 5 linhas de `items` (de 413 linhas / 314 item_id) com `category` nula — `item_id` 9001,
+   19045, 13105, 14684 e 51849 — mas todas pertencem a `item_id` duplicados cuja linha irmã
+   tem `category` preenchida; nenhum produto está de fato sem categoria (ver Achado #5
+   revisado em `data_quality_report.md`). `item_id 19045` tem vendas em `orders`.
+   **Status: Resolvido no ETL** (Group By `item_id` + Max(`category`) → `dim_product` com 314
+   linhas, todas com categoria real; verificado no Power BI).
 5. `city` em `users`/`targets` tem grafia inconsistente (`SP` vs `São Paulo`, `RJ` vs
    `Rio de Janeiro`) e diverge entre as duas tabelas em 3 de 8 registros — mesma cidade, grafia
    diferente, não é um dado contraditório, mas precisa de padronização (De-Para) antes de

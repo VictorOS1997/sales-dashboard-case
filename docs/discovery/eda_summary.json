@@ -39,7 +39,7 @@
     },
     {
       "field": "items.category",
-      "issue": "5 of 413 rows (1.21%) have null category, but all 5 belong to item_id already flagged as duplicated (9001, 19045, 13105, 14684, 51849) and the sibling duplicate row has category filled (beer/nab) in each case — no item_id is actually missing a known category. Corrected 2026-10-02 (originally stated as '5 item_id without category').",
+      "issue": "5 of 413 rows (1.21%) have null category, but all 5 belong to item_id already flagged as duplicated (9001, 19045, 13105, 14684, 51849) and the sibling duplicate row has category filled (beer/nab) in each case — no item_id is actually missing a known category. Corrected 2026-10-02 (originally stated as '5 item_id without category'). Status: Resolved in ETL (Group By item_id + Max(category) -> dim_product 314 rows, all with category; verified in Power BI).",
       "severity": "minor",
       "business_impact": "No real impact if dim_product dedup prefers the non-null category per item_id (e.g. Table.Group + List.RemoveNulls/First) instead of a naive Remove Duplicates that could keep the null row arbitrarily."
     },

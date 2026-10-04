@@ -59,7 +59,8 @@ detalhe de cada visual).
      meta, categoria de produto dominante em volume).
   2. Bloco "Limitações e decisões metodológicas" — replicando de forma executiva os pontos de
      `business_context.md` seção 6 (grão de revenue, Top 5 por frequência, novembro parcial,
-     base de 8 clientes, 5 produtos sem categoria, revenue=0).
+     base de 8 clientes, revenue=0). O achado #5 (categoria nula) foi resolvido no ETL e não
+     entra mais como limitação (ver `data_quality_report.md`, changelog, commit bb142b6).
   3. Não incluir nenhum número que não esteja também disponível/rastreável nas páginas
      anteriores — esta aba resume, não introduz dado novo.
 - Página deve ficar oculta na navegação padrão, acessível via botão/link discreto (ex. "Ver
@@ -78,3 +79,33 @@ detalhe de cada visual).
 2. De-Para de cidade implementado no Power Query antes da página Customer Analysis.
 3. Flag de "mês parcial" (coluna calculada ou medida) implementada antes da página Time
    Analysis e de qualquer cartão de YTD/MoM no Executive Overview.
+
+## Implementation status / as-built
+
+Estado real do dashboard, verificado pelo usuário no Power BI Desktop. Não altera nenhuma
+definição de KPI; os blocos acima permanecem como especificação.
+
+- **p1 Executive Overview**: 4 cartões de KPI, 4 slicers, linha de tendência mensal com marcador
+  de novembro parcial e medida de tooltip (Partial Month Note).
+- **p2 Time Analysis**: alternância Receita/Pedidos linha <-> coluna (4 visuais empilhados +
+  botões + bookmarks); YTD com título dinâmico (YTD Title); colunas de MoM com regra de 4 cores
+  (parcial `#5C4A12`, acima da média `#6FA66B`, negativo `#8A867E`, demais ouro `#E5B611`).
+- **p3 Product Analysis**: Top 5 por frequência de pedidos; linhas de pedido por categoria (beer
+  1514, nab 122, liquor 11, soda 4; total 1651); KPI Unsold Products = 138 de 314; disclaimer fixo.
+  Valores de referência do Top 5 sem filtro: 49121 (116), 71496 (62), 60146 (53), 80738 (50),
+  93608 (45).
+- **p4 Customer Analysis**: banner de n=8; receita por cliente com toggle R$ <-> % (bookmarks);
+  Revenue vs Target em barras agrupadas (Total Revenue e Target in Period); receita por categoria
+  de estabelecimento: restaurant 419.997,40 / bar 181.107,46 / shop 5.039,23; por cidade: Rio de
+  Janeiro 413.043,71 / Campinas 152.162,79 / São Paulo 36.259,09 / Não informado 4.678,50.
+- **p5 Conclusion**: oculta, 3 caixas de texto, escrita em inglês.
+- **Medidas novas** (além do catálogo original): Partial Month Note, YTD Title, MoM Color,
+  Revenue % of Total, Target in Period, Unsold Products — ver `kpi_catalog.md` seção 8.
+- **Modelo**: dois relacionamentos extras adicionados para os slicers da p3 funcionarem:
+  `dim_date[Date]` -> `fact_orders[order_date]` e `dim_customer[user_id]` ->
+  `fact_orders[user_id]` (decisão registrada).
+- **Achado #5 resolvido no ETL**: `dim_product` via Group By `item_id` + Max(`category`), 314
+  linhas, todas com categoria; não há bucket "Categoria não informada" na prática nem limitação
+  de "5 produtos sem categoria" (ver `data_quality_report.md`, changelog, commit bb142b6).
+- **Item em aberto**: idioma do dashboard (PT vs EN) a ser padronizado pelo usuário antes da
+  revisão; decisão não tomada aqui.

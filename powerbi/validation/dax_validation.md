@@ -1,14 +1,17 @@
 # DAX Validation — bi-case-pbi
 
-Autor: DAX & Power BI Engineer (04). Validação feita por reconciliação
+Autor: DAX & Power BI Engineer (04). **Atualização 2026-10-03**: as medidas
+foram executadas e validadas no Power BI Desktop contra uma referência em
+pandas — ver a seção "Validation in Power BI Desktop (2026-10-03)" no final
+deste arquivo (resultados reais, prevalecem sobre o texto abaixo).
+
+Histórico (versão original): validação feita por reconciliação
 aritmética com os números já verificados pelo EDA (`docs/discovery/
-data_quality_report.md`, `data_profile.csv`, `eda_report.md`) — não há
-engine Power BI disponível nesta sessão para execução real das medidas;
-a validação abaixo é um recálculo manual/lógico do comportamento esperado
-de cada expressão DAX contra os mesmos dados de referência do EDA, o que
-é suficiente para confirmar corretude de fórmula e grão, mas não substitui
-a validação final dentro do Power BI Desktop (recomendado antes de
-publicar o relatório).
+data_quality_report.md`, `data_profile.csv`, `eda_report.md`), sem engine
+Power BI disponível na sessão; as seções 1 a 7 abaixo são esse recálculo
+manual/lógico do comportamento esperado de cada expressão DAX, mantido como
+registro. Onde dizem "sem engine disponível" ou "recomenda-se validar no
+Power BI Desktop", essa pendência foi fechada na seção final.
 
 ## 1. Total Revenue
 
@@ -143,17 +146,18 @@ publicar o relatório).
 
 ## 6. Order Lines by Category
 
-- **Medida**: `COUNTROWS(fact_orders)`, cruzada com `dim_product[category_display]`.
+- **Medida**: `COUNTROWS(fact_orders)`, cruzada com `dim_product[category]`
+  (modelo final; `category_display` não existe mais — ver semantic_model.md).
 - **Reconciliação de base**: EDA confirma 176 product_id distintos em
   orders, 0 órfãos contra items (kpi_catalog.md KPI 5, "evidência de
   validação" — mesmo join reaproveitado aqui) — relacionamento
   fact_orders[product_id] -> dim_product[item_id] é seguro.
 - **Teste de contexto — categoria nula**: os 5 item_id sem categoria
   (incl. 19045, que tem vendas registradas — achado #5) aparecem sob
-  `dim_product[category_display] = "Categoria não informada"` em vez de
-  serem omitidos — confirmado pela lógica da coluna calculada em
-  `dim_product` (ver semantic_model.md). **Não omitido silenciosamente**,
-  conforme exigido pelo catálogo.
+  `"Categoria não informada"` em vez de serem omitidos (texto original
+  desta seção; no modelo final `dim_product[category]` não tem nulos e o
+  rótulo é só fallback defensivo — ver semantic_model.md). **Não omitido
+  silenciosamente**, conforme exigido pelo catálogo.
 - **Teste de contexto — total geral**: `COUNTROWS(fact_orders)` sem
   filtro deve retornar 1.651 linhas (1.660 brutas − 9 duplicatas exatas,
   achado #2) — este é o total de "linhas de pedido" correto após dedupe,
@@ -266,3 +270,64 @@ frequência de pedidos", já suportada pelo modelo atual.
 "por frequência" — medida implementada na seção 7 acima, em
 `powerbi/dax/02_business_kpis.dax`. Este item não está mais bloqueado nem é
 um gap aberto.
+
+---
+
+## Validation in Power BI Desktop (2026-10-03)
+
+Validação real, executada no Power BI Desktop e comparada contra uma
+referência em pandas. Todos os valores abaixo coincidiram. Evidências:
+`powerbi/validation/validation.png` e `powerbi/validation/validation matrix.png`.
+
+### Sem filtro
+
+| Medida | Resultado |
+|---|---|
+| Total Revenue | 606.144,09 |
+| Distinct Order Count | 356 |
+| Order Lines Count | 1651 |
+| Average Ticket | 1.702,65 |
+| YTD Revenue | 606.144,09 |
+| Monthly Target | 241550 |
+| Complete Months In Period | 10 |
+| Revenue vs Target | 25,09% |
+
+### Por mês (Total Revenue, jan a nov)
+
+102.932,21 / 74.244,78 / 55.514,71 / 42.182,81 / 159.987,03 / 14.113,94 /
+16.905,95 / 18.415,60 / 53.141,61 / 45.877,52 / 22.827,93.
+MoM Growth % de janeiro em branco (esperado, sem mês anterior).
+
+### Por cliente
+
+- Os 8 clientes bateram com a referência; a soma de Total Revenue dos 8 =
+  606.144,09 (igual ao total).
+- Exemplo, user_id 37404863: 385.662,18; 54 pedidos; Average Ticket
+  7.141,89; Revenue vs Target 51,42%.
+- Top 5 Products por frequência (Product Order Frequency) bateu:
+  49121 (116), 71496 (62), 60146 (53), 80738 (50), 93608 (45).
+
+### Matriz cliente x mês (user_id 37404863)
+
+- Maio: receita 151.642,80; 8 pedidos; Revenue vs Target 202,19%;
+  MoM 392,16%; YTD 297.397,82.
+- Novembro: Revenue vs Target **em branco** porque Complete Months In Period
+  = 0 (novembro é mês parcial e não conta como mês completo). Comportamento
+  esperado, não bug.
+
+### Gabarito da página 3 (após as novas relações)
+
+Com as relações `dim_date[Date] -> fact_orders[order_date]` e
+`dim_customer[user_id] -> fact_orders[user_id]` (ver `model/semantic_model.md`):
+
+- Sem filtro: Unsold Products = 138; linhas por categoria: beer 1514,
+  nab 122, liquor 11, soda 4.
+- Cliente 37404863: 139 linhas; Unsold Products = 282.
+- Mês de maio: 137 linhas; Unsold Products = 238.
+
+### Medidas auxiliares
+
+As medidas de `powerbi/dax/04_dashboard_helpers.dax` (Partial Month Note,
+YTD Title, MoM Color, Revenue % of Total, Target in Period, Unsold Products)
+são documentadas nesse arquivo; Unsold Products foi conferido no gabarito
+acima. Lições aprendidas de MoM Color estão no cabeçalho do mesmo arquivo.

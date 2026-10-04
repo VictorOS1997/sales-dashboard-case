@@ -48,10 +48,13 @@ tabela no grão de linha apenas para contagens de item/categoria.
   99 duplicatas de item_id / 94 linhas 100% duplicadas (achado #4; 0
   conflitos de categoria confirmados pelo EDA, dedupe seguro). 314 linhas
   resultantes.
-- Tratamento de categoria nula (achado #5, 5 item_id incl. 19045 com
-  vendas): coluna calculada/Power Query `category_display` =
-  `IF(ISBLANK(category), "Categoria não informada", category)`, usada em
-  todo visual de categoria em vez da coluna bruta `category`.
+- Construção final (as-built): `dim_product` é montada no Power Query com
+  Group By `item_id` + `Max(category)` — 314 linhas, sem nulos em
+  `category`. Os visuais usam `dim_product[category]` diretamente. A coluna
+  `category_display` mencionada em versões anteriores **não existe** no
+  modelo final. O rótulo "Categoria não informada" (achado #5, 5 item_id
+  incl. 19045 com vendas) permanece apenas como fallback defensivo caso
+  uma categoria nula volte a aparecer na origem.
 - Relaciona-se com fact_orders (item_id -> product_id, 1:N).
 
 ### dim_customer
@@ -59,8 +62,9 @@ tabela no grão de linha apenas para contagens de item/categoria.
 - Tratamento de cidade (achado #6): coluna `city_display` via De-Para
   (Power Query): SP -> São Paulo, RJ -> Rio de Janeiro, Campinas inalterado,
   nulo (user_id 83095742) -> "Não informado" (nunca descartado).
-- Relaciona-se com order_revenue (user_id -> user_id, 1:N) e com targets
-  (user_id -> user_id, 1:1).
+- Relaciona-se com order_revenue (user_id -> user_id, 1:N), com
+  fact_orders (user_id -> user_id, 1:N, adicionada no modelo final) e com
+  targets (user_id -> user_id, 1:1).
 - **Limitação estrutural**: apenas 8 clientes no dataset inteiro — qualquer
   segmentação por cliente/categoria/cidade opera sobre n=8. Deve carregar
   banner de limitação estatística em qualquer página de Customer Analysis
@@ -77,7 +81,9 @@ tabela no grão de linha apenas para contagens de item/categoria.
 - Coluna `IsPartialMonth` sinaliza novembro/2024 (dados reais só até dia
   10) para consumo pelo Dashboard Designer nos visuais de MoM/YTD.
 - Relaciona-se com order_revenue (Date -> order_date, 1:N, filtro de
-  dim_date para order_revenue).
+  dim_date para order_revenue) **e com fact_orders** (Date -> order_date,
+  1:N) — este segundo relacionamento foi adicionado no modelo final (ver
+  "Relacionamentos adicionais" abaixo).
 
 ### targets
 - Fonte: `PBI_targets.xlsx`, 8 linhas, 1 por user_id, sem dimensão de mês.
@@ -100,21 +106,40 @@ order_revenue (grão de pedido, 356 linhas)  ---- N:1 (user_id) ----  dim_custom
       |  precisam de JOIN explícito entre si no modelo estrela)
 
 fact_orders (grão de linha, 1.651 linhas)  ---- N:1 (product_id -> item_id) ----  dim_product
-      |
-      | N:1 (user_id -> user_id) — opcional, só necessário se algum visual
-      |  cruzar linha de item com cliente sem passar por revenue
-      v
-dim_customer
+      ^                         ^
+      | 1:N (Date -> order_date)| 1:N (user_id -> user_id)
+   dim_date                 dim_customer
 ```
 
-**Nota de modelagem**: `order_revenue` e `fact_orders` não têm relacionamento
-físico direto entre si no Power BI (ambas se relacionam independentemente com
-dim_date/dim_customer/dim_product pelos seus próprios campos). Isso é
-intencional: evita ambiguidade de filtro cruzado e mantém cada tabela no seu
-papel — `order_revenue` para receita, `fact_orders` para contagem de
-item/categoria. Qualquer visual que precise cruzar "receita" E "categoria de
-produto" ao mesmo tempo com exatidão **não é suportado pelos dados brutos**
-(achado #1 — não há receita por item), e não deve ser forçado.
+### Relacionamentos adicionais (as-built, validados no Power BI Desktop em 2026-10-03)
+
+Duas relações foram adicionadas além do desenho inicial:
+
+- `dim_date[Date]` -> `fact_orders[order_date]` (1:N)
+- `dim_customer[user_id]` -> `fact_orders[user_id]` (1:N)
+
+Motivo: sem elas, os slicers de Período / Cliente / Cidade / Categoria não
+filtravam os visuais de produto (contagem de linhas, Top 5, Unsold
+Products), que dependem de `fact_orders`. A versão anterior deste documento
+afirmava que `fact_orders` não tinha relacionamento com
+dim_date/dim_customer; isso **não vale mais** no modelo final.
+
+**Nota de modelagem**: `order_revenue` e `fact_orders` continuam sem
+relacionamento físico direto entre si (ambas se relacionam independentemente
+com dim_date/dim_customer pelos seus próprios campos, e `fact_orders` também
+com dim_product). Isso é intencional: mantém cada tabela no seu papel —
+`order_revenue` para receita, `fact_orders` para contagem de item/categoria
+— e como ambas são filtradas por dim_date e dim_customer, os slicers
+propagam para os dois lados sem ambiguidade. Qualquer visual que precise
+cruzar "receita" E "categoria de produto" ao mesmo tempo com exatidão **não
+é suportado pelos dados brutos** (achado #1 — não há receita por item), e
+não deve ser forçado.
+
+### Medidas auxiliares de dashboard
+
+As medidas de apoio a visuais (títulos dinâmicos, cor condicional, % do
+total, meta no período, produtos sem venda) estão em
+`powerbi/dax/04_dashboard_helpers.dax`.
 
 ## Por que não um esquema estrela "tradicional" único
 
